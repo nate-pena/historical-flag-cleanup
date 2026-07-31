@@ -1,0 +1,5 @@
+runs/
+node_modules/
+.env
+*.db
+.DS_Store
