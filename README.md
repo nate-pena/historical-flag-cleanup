@@ -82,3 +82,33 @@ Install (one time):
 mkdir -p ~/.claude/skills/historical-flag-cleanup
 cp SKILL.md ~/.claude/skills/historical-flag-cleanup/SKILL.md
 ```
+
+---
+
+## Sibling tool: `pre-golive-cleanup.mjs`
+
+Same safety spine, **different qualifying rule, and it resolves rather than unassigns**. It closes
+flags that were raised BEFORE a customer's go-live date and are assigned only to ENC staff — out of
+scope because the flag pre-dates the engagement.
+
+```bash
+node pre-golive-cleanup.mjs --customer=ge-aerospace --cutoff=2025-05-06          # dry run
+node pre-golive-cleanup.mjs --customer=ge-aerospace --cutoff=2025-05-06 --live   # execute
+```
+
+A flag qualifies only when all of these hold, re-verified live at the moment of writing:
+
+1. Its **own earliest "Flagged" event** is strictly before the cutoff. ⚠ The saved-list
+   "Flag Created" column is BILL-scoped and is never used for dating; an issue with no readable
+   Flagged event is set aside rather than resolved.
+2. It is open.
+3. It has at least one assignee and **every** assignee is ENC staff, matched by userId against the
+   live per-database roster. One customer assignee means it is never touched; an empty assignee list
+   is set aside for a human.
+
+Dry-run by default, one explicit customer per run, an explicit cutoff required, live re-verification
+of every issue immediately before writing, assignees preserved, canary of 25 then chunks of 250,
+verify-after-write, abort-on-anomaly. It reads credentials through the Flag Ops directory
+(`FLAG_OPS_DIR`, default `~/code/flag-ops`) and never reads `.env` or prints a key itself.
+
+Run 2026-08-01: GE Aerospace 0 · Ventek 19 · Toppan 78.
